@@ -357,16 +357,31 @@ def do_nms(boxes, nms_thresh):
                     boxes[index_j].classes[c] = 0
                     
 def draw_boxes(image, boxes, labels, obj_thresh):
+
+    box_info_list = []
+
     for box in boxes:
         label_str = ''
         label = -1
-        
         for i in range(len(labels)):
             if box.classes[i] > obj_thresh:
                 label_str += labels[i]
                 label = i
                 print(labels[i] + ': ' + str(box.classes[i]*100) + '%')
-                
+                img_width, img_height, num_channels = image.shape
+                width = box.xmax - box.xmin
+                height = box.ymax - box.ymin
+                center_x = box.xmin + 1/2*width
+                center_y = box.ymin + 1/2*height
+
+                width = float(width) / img_width
+                height = float(height) / img_height
+                center_x = float(center_x)/img_width
+                center_y = float(center_y)/img_height
+
+                print("box info", i ,center_x, center_y, width, height)
+                box_info = [i ,center_x, center_y, width, height]
+                box_info_list.append(box_info)
         if label >= 0:
             cv2.rectangle(image, (box.xmin,box.ymin), (box.xmax,box.ymax), (0,255,0), 3)
             cv2.putText(image, 
@@ -375,8 +390,11 @@ def draw_boxes(image, boxes, labels, obj_thresh):
                         cv2.FONT_HERSHEY_SIMPLEX, 
                         1e-3 * image.shape[0], 
                         (0,255,0), 2)
-        
-    return image      
+    # save to output file
+    label_file = './labels.txt'
+    np.savetxt(label_file, np.array(box_info_list), delimiter=' ')
+
+    return image
 
 def _main_(args):
     weights_path = args.weights
