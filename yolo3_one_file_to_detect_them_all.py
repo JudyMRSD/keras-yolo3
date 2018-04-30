@@ -1,3 +1,4 @@
+# source activate carnd-track-yolo
 # python yolo3_one_file_to_detect_them_all.py -w yolov3-demo.weights -i dog.jpg
 import argparse
 import os

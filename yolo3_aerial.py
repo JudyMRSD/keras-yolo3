@@ -1,3 +1,5 @@
+# source activate carnd-track-yolo
+# python yolo3_aerial.py -w yolov3-aerial.weights -i car.jpg
 import argparse
 import os
 import numpy as np
@@ -381,21 +383,38 @@ def draw_boxes(image, boxes, labels, obj_thresh):
                 label_str += labels[i]
                 label = i
                 print(labels[i] + ': ' + str(box.classes[i]*100) + '%')
-                img_width, img_height, num_channels = image.shape
-                width = box.xmax - box.xmin
-                height = box.ymax - box.ymin
-                center_x = box.xmin + 1/2*width
-                center_y = box.ymin + 1/2*height
 
-                width = float(width) / img_width
-                height = float(height) / img_height
-                center_x = float(center_x)/img_width
-                center_y = float(center_y)/img_height
-
-                print("box info", i ,center_x, center_y, width, height)
-                box_info = [i ,center_x, center_y, width, height]
-                box_info_list.append(box_info)
         if label >= 0:
+            img_height, img_width, num_channels = image.shape
+            print("img_height, width", img_height, img_width)
+
+            print("xmin, ymin, xmax, ymax", box.xmin, box.ymin, box.xmax, box.ymax)
+            width = box.xmax - box.xmin
+
+            height = box.ymax - box.ymin
+            center_x = box.xmin + 0.5 * width
+            center_y = box.ymin + 0.5 * height
+
+            print("width, height", width, height)
+
+            # width = float(width) / img_width
+            # height = float(height) / img_height
+            # center_x = float(center_x)/img_width
+            # center_y = float(center_y)/img_height
+
+            print("box info", i, center_x, center_y, width, height)
+            box_info = [i, center_x, center_y, width, height]
+            box_info_list.append(box_info)
+
+            x1 = int(center_x - 0.5*width)
+            x2 = int(center_x + 0.5*width)
+            y1 = int(center_y - 0.5*height)
+            y2 = int(center_y + 0.5*height)
+            print("x1,y1,x2,y2",x1,y1,x2,y2)
+            cv2.rectangle(image, (x1,y1), (x2, y2), (0, 255, 0), 3)
+
+
+
             cv2.rectangle(image, (box.xmin,box.ymin), (box.xmax,box.ymax), (0,255,0), 3)
             cv2.putText(image, 
                         label_str + ' ' + str(box.get_score()), 
