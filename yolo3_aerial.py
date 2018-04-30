@@ -162,7 +162,7 @@ def bbox_iou(box1, box2):
 
 def make_yolov3_model():
     # outdim = 3 * (8 + 5)  # 255
-    outdim = 3*(4+5)
+    outdim = 3*(20+5)
     input_image = Input(shape=(None, None, 3))
 
     # Layer  0 => 4
@@ -262,7 +262,8 @@ def make_yolov3_model():
     print("model_106", model_106.summary())
 
 
-    model = Model(input_image, [yolo_82, yolo_94, yolo_106])    
+    model = Model(input_image, [yolo_82, yolo_94, yolo_106])
+    # model = Model(input_image, [yolo_82])
     return model
 
 def preprocess_input(image, net_h, net_w):
@@ -294,8 +295,7 @@ def decode_netout(netout, anchors, obj_thresh, nms_thresh, net_h, net_w):
     print("netout.shape after reshape", netout.shape)
     # nb_class = 80  = 85 -5   # aerial: 4 = 9-5
     nb_class = netout.shape[-1] - 5  # 5 : box coordinates and objectness score
-
-
+    print("nb_class", nb_class)
     boxes = []
 
     netout[..., :2]  = _sigmoid(netout[..., :2])
@@ -447,6 +447,8 @@ def _main_(args):
     for i in range(len(yolos)):
         # decode the output of the network
         print("i",i)
+        if (i==0):
+            print ("yolos[i][0]", yolos[i][0])
         print("yolos[i][0] shape", len(yolos[i][0]))# len(yolos[0][0]) = 13, len(yolos[1][0]) = 26, len(yolos[2][0]) = 52
         boxes += decode_netout(yolos[i][0], anchors[i], obj_thresh, nms_thresh, net_h, net_w)
 
