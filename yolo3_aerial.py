@@ -161,6 +161,8 @@ def bbox_iou(box1, box2):
     return float(intersect) / union
 
 def make_yolov3_model():
+    # outdim = 3 * (8 + 5)  # 255
+    outdim = 3*(4+5)
     input_image = Input(shape=(None, None, 3))
 
     # Layer  0 => 4
@@ -221,7 +223,7 @@ def make_yolov3_model():
 
     # Layer 80 => 82
     yolo_82 = _conv_block(x, [{'filter': 1024, 'kernel': 3, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 80},
-                              {'filter':  255, 'kernel': 1, 'stride': 1, 'bnorm': False, 'leaky': False, 'layer_idx': 81}], skip=False)
+                              {'filter':  outdim, 'kernel': 1, 'stride': 1, 'bnorm': False, 'leaky': False, 'layer_idx': 81}], skip=False)
 
     # Layer 83 => 86
     x = _conv_block(x, [{'filter': 256, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 84}], skip=False)
@@ -237,7 +239,7 @@ def make_yolov3_model():
 
     # Layer 92 => 94
     yolo_94 = _conv_block(x, [{'filter': 512, 'kernel': 3, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 92},
-                              {'filter': 255, 'kernel': 1, 'stride': 1, 'bnorm': False, 'leaky': False, 'layer_idx': 93}], skip=False)
+                              {'filter': outdim, 'kernel': 1, 'stride': 1, 'bnorm': False, 'leaky': False, 'layer_idx': 93}], skip=False)
 
     # Layer 95 => 98
     x = _conv_block(x, [{'filter': 128, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True,   'layer_idx': 96}], skip=False)
@@ -251,7 +253,14 @@ def make_yolov3_model():
                                {'filter': 256, 'kernel': 3, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 102},
                                {'filter': 128, 'kernel': 1, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 103},
                                {'filter': 256, 'kernel': 3, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 104},
-                               {'filter': 255, 'kernel': 1, 'stride': 1, 'bnorm': False, 'leaky': False, 'layer_idx': 105}], skip=False)
+                               {'filter': outdim, 'kernel': 1, 'stride': 1, 'bnorm': False, 'leaky': False, 'layer_idx': 105}], skip=False)
+    model_82 = Model(input_image, [yolo_82])
+    print("model_82", model_82.summary())
+    model_94 = Model(input_image, [yolo_94])
+    print("model_94", model_94.summary())
+    model_106 = Model(input_image, [yolo_106])
+    print("model_106", model_106.summary())
+
 
     model = Model(input_image, [yolo_82, yolo_94, yolo_106])    
     return model
@@ -283,7 +292,7 @@ def decode_netout(netout, anchors, obj_thresh, nms_thresh, net_h, net_w):
     nb_box = 3 # yolo v3 predicts 3 bbox for every cell
     netout = netout.reshape((grid_h, grid_w, nb_box, -1)) # (numRow=52, numCol=52, 3, 85)
     print("netout.shape after reshape", netout.shape)
-    # nb_class = 80  = 85 -5
+    # nb_class = 80  = 85 -5   # aerial: 4 = 9-5
     nb_class = netout.shape[-1] - 5  # 5 : box coordinates and objectness score
 
 
@@ -408,17 +417,17 @@ def _main_(args):
     net_h, net_w = 416, 416
     obj_thresh, nms_thresh = 0.5, 0.45
     anchors = [[116,90,  156,198,  373,326],  [30,61, 62,45,  59,119], [10,13,  16,30,  33,23]]
-    labels = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", \
-              "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", \
-              "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", \
-              "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", \
-              "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", \
-              "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", \
-              "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", \
-              "chair", "sofa", "pottedplant", "bed", "diningtable", "toilet", "tvmonitor", "laptop", "mouse", \
-              "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", \
-              "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]
-    # labels = ["car", "truck bus", "minibus", "cyclist" ]
+    # labels = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", \
+    #           "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", \
+    #           "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", \
+    #           "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", \
+    #           "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", \
+    #           "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", \
+    #           "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", \
+    #           "chair", "sofa", "pottedplant", "bed", "diningtable", "toilet", "tvmonitor", "laptop", "mouse", \
+    #           "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", \
+    #           "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]
+    labels = ["car", "truck bus", "minibus", "cyclist" ]
     # make the yolov3 model to predict 80 classes on COCO
     yolov3 = make_yolov3_model()
 

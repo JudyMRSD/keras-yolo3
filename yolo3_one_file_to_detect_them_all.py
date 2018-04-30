@@ -1,3 +1,4 @@
+# python yolo3_one_file_to_detect_them_all.py -w yolov3-demo.weights -i dog.jpg
 import argparse
 import os
 import numpy as np
@@ -252,6 +253,14 @@ def make_yolov3_model():
                                {'filter': 128, 'kernel': 1, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 103},
                                {'filter': 256, 'kernel': 3, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 104},
                                {'filter': 255, 'kernel': 1, 'stride': 1, 'bnorm': False, 'leaky': False, 'layer_idx': 105}], skip=False)
+
+    model_82 = Model(input_image, [yolo_82])
+    print("model_82", model_82.summary())
+    model_94 = Model(input_image, [yolo_94])
+    print("model_94", model_94.summary())
+    model_106 = Model(input_image, [yolo_106])
+    print("model_106", model_106.summary())
+
 
     model = Model(input_image, [yolo_82, yolo_94, yolo_106])    
     return model
