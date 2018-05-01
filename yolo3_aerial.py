@@ -397,21 +397,21 @@ def draw_boxes(image, boxes, labels, obj_thresh):
 
             print("width, height", width, height)
 
-            # width = float(width) / img_width
-            # height = float(height) / img_height
-            # center_x = float(center_x)/img_width
-            # center_y = float(center_y)/img_height
+            width = float(width) / img_width
+            height = float(height) / img_height
+            center_x = float(center_x)/img_width
+            center_y = float(center_y)/img_height
 
             print("box info", i, center_x, center_y, width, height)
             box_info = [i, center_x, center_y, width, height]
             box_info_list.append(box_info)
 
-            x1 = int(center_x - 0.5*width)
-            x2 = int(center_x + 0.5*width)
-            y1 = int(center_y - 0.5*height)
-            y2 = int(center_y + 0.5*height)
-            print("x1,y1,x2,y2",x1,y1,x2,y2)
-            cv2.rectangle(image, (x1,y1), (x2, y2), (0, 255, 0), 3)
+            # x1 = int(center_x - 0.5*width)
+            # x2 = int(center_x + 0.5*width)
+            # y1 = int(center_y - 0.5*height)
+            # y2 = int(center_y + 0.5*height)
+            # print("x1,y1,x2,y2",x1,y1,x2,y2)
+            # cv2.rectangle(image, (x1,y1), (x2, y2), (0, 255, 0), 3)
 
 
 

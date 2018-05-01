@@ -1,5 +1,5 @@
 # source activate carnd-track-yolo
-# python yolo3_aerial_video.py -w yolov3-aerial.weights -i car.jpg
+# python yolo3_aerial_video.py -w yolov3-aerial.weights -i ./input_imgs/
 import argparse
 import os
 import numpy as np
@@ -8,7 +8,8 @@ from keras.layers.merge import add, concatenate
 from keras.models import Model
 import struct
 import cv2
-
+import glob
+import os
 np.set_printoptions(threshold=np.nan)
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -24,7 +25,7 @@ argparser.add_argument(
 argparser.add_argument(
     '-i',
     '--image',
-    help='path to image file')
+    help='path to image directory')
 
 class WeightReader:
     def __init__(self, weight_file):
@@ -111,7 +112,7 @@ class BoundBox:
         return self.score
 class Yolo3:
     def __init__(self):
-        print("init Yolo3")
+        self.model = None
     def _conv_block(self,inp, convs, skip=True):
         x = inp
         count = 0
@@ -266,9 +267,9 @@ class Yolo3:
         model_106 = Model(input_image, [yolo_106])
         print("model_106", model_106.summary())
 
-        model = Model(input_image, [yolo_82, yolo_94, yolo_106])
+        self.model = Model(input_image, [yolo_82, yolo_94, yolo_106])
         # model = Model(input_image, [yolo_82])
-        return model
+        return self.model
 
     def preprocess_input(self, image, net_h, net_w):
         new_h, new_w, _ = image.shape
@@ -373,7 +374,7 @@ class Yolo3:
                     if self.bbox_iou(boxes[index_i], boxes[index_j]) >= nms_thresh:
                         boxes[index_j].classes[c] = 0
 
-    def draw_boxes(self, image, boxes, labels, obj_thresh):
+    def draw_boxes(self, result_dir, label_basename, image, boxes, labels, obj_thresh):
 
         box_info_list = []
 
@@ -416,16 +417,50 @@ class Yolo3:
                             1e-3 * image.shape[0],
                             (0,255,0), 2)
         # save to output file
-        label_file = './labels.txt'
+        label_file = result_dir +"/bbox_label/"+ label_basename +'.txt'
         np.savetxt(label_file, np.array(box_info_list), delimiter=' ')
 
         return image
 
-    
+    def process_image(self, result_dir, image_path, net_h, net_w, anchors, obj_thresh, nms_thresh, labels):
+        image = cv2.imread(image_path)
+        image_base_name = os.path.basename(image_path)
+        image_base_name = os.path.splitext(image_base_name)[0]
+        image_h, image_w, _ = image.shape
+        print("image_h, w", image_h, image_w)
+        new_image = self.preprocess_input(image, net_h, net_w)
+        # run the prediction
+        yolos = self.model.predict(new_image)
+        boxes = []
+
+        for i in range(len(yolos)):
+            # decode the output of the network
+            print("i", i)
+            if (i == 0):
+                print("yolos[i][0]", yolos[i][0])
+            print("yolos[i][0] shape",
+                  len(yolos[i][0]))  # len(yolos[0][0]) = 13, len(yolos[1][0]) = 26, len(yolos[2][0]) = 52
+            boxes += self.decode_netout(yolos[i][0], anchors[i], obj_thresh, nms_thresh, net_h, net_w)
+
+        # correct the sizes of the bounding boxes
+        self.correct_yolo_boxes(boxes, image_h, image_w, net_h, net_w)
+
+        # suppress non-maximal boxes
+        self.do_nms(boxes, nms_thresh)
+
+        # draw bounding boxes on the image using labels
+        label_basename = image_base_name
+        self.draw_boxes(result_dir, label_basename, image, boxes, labels, obj_thresh)
+        outimg_path = result_dir + "/bbox_img/" +image_base_name + '_detected'+'.jpg'
+        print("image detected bbox path", outimg_path)
+        # write the image with bounding boxes to file
+        cv2.imwrite(outimg_path , (image).astype('uint8'))
+
     def _main_(self, args):
         weights_path = args.weights
-        image_path   = args.image
-
+        image_dir   = args.image
+        image_files = glob.glob(image_dir + "*.jpg")
+        print("img files", image_files)
         # set some parameters
         net_h, net_w = 416, 416
         obj_thresh, nms_thresh = 0.5, 0.45
@@ -440,33 +475,11 @@ class Yolo3:
         weight_reader.load_weights(yolov3)
 
         # preprocess the image
-        image = cv2.imread(image_path)
-        image_h, image_w, _ = image.shape
-        print("image_h, w", image_h, image_w)
-        new_image = self.preprocess_input(image, net_h, net_w)
-        # run the prediction
-        yolos = yolov3.predict(new_image)
-        boxes = []
+        result_dir = './output'
+        for image_path in image_files:
+            self.process_image(result_dir, image_path, net_h, net_w, anchors, obj_thresh, nms_thresh, labels)
 
-        for i in range(len(yolos)):
-            # decode the output of the network
-            print("i",i)
-            if (i==0):
-                print ("yolos[i][0]", yolos[i][0])
-            print("yolos[i][0] shape", len(yolos[i][0]))# len(yolos[0][0]) = 13, len(yolos[1][0]) = 26, len(yolos[2][0]) = 52
-            boxes += self.decode_netout(yolos[i][0], anchors[i], obj_thresh, nms_thresh, net_h, net_w)
 
-        # correct the sizes of the bounding boxes
-        self.correct_yolo_boxes(boxes, image_h, image_w, net_h, net_w)
-
-        # suppress non-maximal boxes
-        self.do_nms(boxes, nms_thresh)
-
-        # draw bounding boxes on the image using labels
-        self.draw_boxes(image, boxes, labels, obj_thresh)
-
-        # write the image with bounding boxes to file
-        cv2.imwrite(image_path[:-4] + '_detected' + image_path[-4:], (image).astype('uint8'))
 
 if __name__ == '__main__':
     args = argparser.parse_args()
