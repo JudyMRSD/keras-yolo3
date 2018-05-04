@@ -25,9 +25,10 @@ def create_training_instances(
     valid_cache,
     labels,
 ):
+    # print("args: ", train_annot_folder, train_image_folder, train_cache, valid_annot_folder, valid_image_folder,valid_cache,labels)
     # parse annotations of the training set
     train_ints, train_labels = parse_voc_annotation(train_annot_folder, train_image_folder, train_cache, labels)
-
+    #print("train_ints, train_labels", train_ints, train_labels)
     # parse annotations of the validation set, if any, otherwise split the training set
     if os.path.exists(valid_annot_folder):
         valid_ints, valid_labels = parse_voc_annotation(valid_annot_folder, valid_image_folder, valid_cache, labels)
@@ -211,9 +212,9 @@ def _main_(args):
 
     os.environ['CUDA_VISIBLE_DEVICES'] = config['train']['gpus']
     multi_gpu = len(config['train']['gpus'].split(','))
-
+    print("labels", labels)
     train_model, infer_model = create_model(
-        nb_class            = len(labels), 
+        nb_class            = len(labels),
         anchors             = config['model']['anchors'], 
         max_box_per_image   = max_box_per_image, 
         max_grid            = [config['model']['max_input_size'], config['model']['max_input_size']], 

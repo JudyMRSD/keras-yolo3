@@ -1,0 +1,35 @@
+{
+    "model" : {
+        "min_input_size":       352,
+        "max_input_size":       448,
+        "anchors":              [10,13,  16,30,  33,23,  30,61,  62,45,  59,119,  116,90,  156,198,  373,326],
+        "labels":               ["raccoon"]
+    },
+
+    "train": {
+        "train_image_folder":   "/home/jin/workspace/Intersection_TrafficFlow/detection/keras-yolo3/training_data/raccoon_dataset/images/",
+        "train_annot_folder":   "/home/jin/workspace/Intersection_TrafficFlow/detection/keras-yolo3/training_data//raccoon_dataset/annotations/",
+	"cache_name":           "kangaroo_train.pkl",
+        
+        "train_times":          10,
+        "batch_size":           1,
+        "learning_rate":        1e-4,
+        "nb_epochs":            2,
+        "warmup_epochs":        1,
+        "ignore_thresh":        0.5,
+        "gpus":                 "",
+        "scales":               [1],
+
+        "tensorboard_dir":      "logs",
+        "saved_weights_name":   "raccoon.h5",
+        "debug":                true
+    },
+
+    "valid": {
+        "valid_image_folder":   "",
+        "valid_annot_folder":   "",
+        "cache_name":           "",
+
+        "valid_times":          1
+    }
+}
