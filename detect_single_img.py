@@ -429,24 +429,15 @@ def draw_boxes(image, boxes, labels, obj_thresh):
 
     return image
 
-def _main_(args):
-    weights_path = args.weights
+def main(args):
     image_path   = args.image
 
     # set some parameters
     net_h, net_w = 416, 416
     obj_thresh, nms_thresh = 0.5, 0.45
     anchors = [[116,90,  156,198,  373,326],  [30,61, 62,45,  59,119], [10,13,  16,30,  33,23]]
-    # labels = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", \
-    #           "boat", "traffic light", "fire hydrant", "stop sign", "parking meter", "bench", \
-    #           "bird", "cat", "dog", "horse", "sheep", "cow", "elephant", "bear", "zebra", "giraffe", \
-    #           "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee", "skis", "snowboard", \
-    #           "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard", \
-    #           "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", \
-    #           "apple", "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", \
-    #           "chair", "sofa", "pottedplant", "bed", "diningtable", "toilet", "tvmonitor", "laptop", "mouse", \
-    #           "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", \
-    #           "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]
+
+
     labels = ["car", "truck", "bus", "minibus", "cyclist" ]
     # make the yolov3 model to predict 80 classes on COCO
     yolov3 = make_yolov3_model()
@@ -460,18 +451,9 @@ def _main_(args):
     image_h, image_w, _ = image.shape
     print("image_h, w", image_h, image_w)
     new_image = preprocess_input(image, net_h, net_w)
-    # run the prediction
 
-    yolov3.save('aerial_model.h5')
-    # Deletes the existing model
-    del yolov3  
 
-    # Returns a compiled model identical to the previous one
     yolov3 = load_model('aerial_model.h5')
-    yolos = yolov3.predict(new_image)
-    
-
-    
 
     boxes = []
 
@@ -497,4 +479,4 @@ def _main_(args):
 
 if __name__ == '__main__':
     args = argparser.parse_args()
-    _main_(args)
+    main(args)
