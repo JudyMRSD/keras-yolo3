@@ -17,10 +17,6 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0"
 argparser = argparse.ArgumentParser(
     description='test yolov3 network with coco weights')
 
-argparser.add_argument(
-    '-w',
-    '--weights',
-    help='path to weights file')
 
 argparser.add_argument(
     '-i',
@@ -163,111 +159,6 @@ def bbox_iou(box1, box2):
     
     return float(intersect) / union
 
-def make_yolov3_model():
-    # outdim = 3 * (8 + 5)  # 255
-    outdim = 3*(20+5)
-    input_image = Input(shape=(None, None, 3))
-
-    # Layer  0 => 4
-    x = _conv_block(input_image, [{'filter': 32, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 0},
-                                  {'filter': 64, 'kernel': 3, 'stride': 2, 'bnorm': True, 'leaky': True, 'layer_idx': 1},
-                                  {'filter': 32, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 2},
-                                  {'filter': 64, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 3}])
-
-    # Layer  5 => 8
-    x = _conv_block(x, [{'filter': 128, 'kernel': 3, 'stride': 2, 'bnorm': True, 'leaky': True, 'layer_idx': 5},
-                        {'filter':  64, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 6},
-                        {'filter': 128, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 7}])
-
-    # Layer  9 => 11
-    x = _conv_block(x, [{'filter':  64, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 9},
-                        {'filter': 128, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 10}])
-
-    # Layer 12 => 15
-    x = _conv_block(x, [{'filter': 256, 'kernel': 3, 'stride': 2, 'bnorm': True, 'leaky': True, 'layer_idx': 12},
-                        {'filter': 128, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 13},
-                        {'filter': 256, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 14}])
-
-    # Layer 16 => 36
-    for i in range(7):
-        x = _conv_block(x, [{'filter': 128, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 16+i*3},
-                            {'filter': 256, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 17+i*3}])
-        
-    skip_36 = x
-        
-    # Layer 37 => 40
-    x = _conv_block(x, [{'filter': 512, 'kernel': 3, 'stride': 2, 'bnorm': True, 'leaky': True, 'layer_idx': 37},
-                        {'filter': 256, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 38},
-                        {'filter': 512, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 39}])
-
-    # Layer 41 => 61
-    for i in range(7):
-        x = _conv_block(x, [{'filter': 256, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 41+i*3},
-                            {'filter': 512, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 42+i*3}])
-        
-    skip_61 = x
-        
-    # Layer 62 => 65
-    x = _conv_block(x, [{'filter': 1024, 'kernel': 3, 'stride': 2, 'bnorm': True, 'leaky': True, 'layer_idx': 62},
-                        {'filter':  512, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 63},
-                        {'filter': 1024, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 64}])
-
-    # Layer 66 => 74
-    for i in range(3):
-        x = _conv_block(x, [{'filter':  512, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 66+i*3},
-                            {'filter': 1024, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 67+i*3}])
-        
-    # Layer 75 => 79
-    x = _conv_block(x, [{'filter':  512, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 75},
-                        {'filter': 1024, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 76},
-                        {'filter':  512, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 77},
-                        {'filter': 1024, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 78},
-                        {'filter':  512, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 79}], skip=False)
-
-    # Layer 80 => 82
-    yolo_82 = _conv_block(x, [{'filter': 1024, 'kernel': 3, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 80},
-                              {'filter':  outdim, 'kernel': 1, 'stride': 1, 'bnorm': False, 'leaky': False, 'layer_idx': 81}], skip=False)
-
-    # Layer 83 => 86
-    x = _conv_block(x, [{'filter': 256, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 84}], skip=False)
-    x = UpSampling2D(2)(x)
-    x = concatenate([x, skip_61])
-
-    # Layer 87 => 91
-    x = _conv_block(x, [{'filter': 256, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 87},
-                        {'filter': 512, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 88},
-                        {'filter': 256, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 89},
-                        {'filter': 512, 'kernel': 3, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 90},
-                        {'filter': 256, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True, 'layer_idx': 91}], skip=False)
-
-    # Layer 92 => 94
-    yolo_94 = _conv_block(x, [{'filter': 512, 'kernel': 3, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 92},
-                              {'filter': outdim, 'kernel': 1, 'stride': 1, 'bnorm': False, 'leaky': False, 'layer_idx': 93}], skip=False)
-
-    # Layer 95 => 98
-    x = _conv_block(x, [{'filter': 128, 'kernel': 1, 'stride': 1, 'bnorm': True, 'leaky': True,   'layer_idx': 96}], skip=False)
-    x = UpSampling2D(2)(x)
-    x = concatenate([x, skip_36])
-
-    # Layer 99 => 106
-    yolo_106 = _conv_block(x, [{'filter': 128, 'kernel': 1, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 99},
-                               {'filter': 256, 'kernel': 3, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 100},
-                               {'filter': 128, 'kernel': 1, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 101},
-                               {'filter': 256, 'kernel': 3, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 102},
-                               {'filter': 128, 'kernel': 1, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 103},
-                               {'filter': 256, 'kernel': 3, 'stride': 1, 'bnorm': True,  'leaky': True,  'layer_idx': 104},
-                               {'filter': outdim, 'kernel': 1, 'stride': 1, 'bnorm': False, 'leaky': False, 'layer_idx': 105}], skip=False)
-    model_82 = Model(input_image, [yolo_82])
-    print("model_82", model_82.summary())
-    model_94 = Model(input_image, [yolo_94])
-    print("model_94", model_94.summary())
-    model_106 = Model(input_image, [yolo_106])
-    print("model_106", model_106.summary())
-
-
-    model = Model(input_image, [yolo_82, yolo_94, yolo_106])
-    # model = Model(input_image, [yolo_82])
-    return model
 
 def preprocess_input(image, net_h, net_w):
     new_h, new_w, _ = image.shape
@@ -429,31 +320,25 @@ def draw_boxes(image, boxes, labels, obj_thresh):
 
     return image
 
-def main(args):
+def _main_(args):
     image_path   = args.image
 
     # set some parameters
     net_h, net_w = 416, 416
     obj_thresh, nms_thresh = 0.5, 0.45
     anchors = [[116,90,  156,198,  373,326],  [30,61, 62,45,  59,119], [10,13,  16,30,  33,23]]
-
-
+    
     labels = ["car", "truck", "bus", "minibus", "cyclist" ]
-    # make the yolov3 model to predict 80 classes on COCO
-    yolov3 = make_yolov3_model()
-
-    # load the weights trained on COCO into the model
-    weight_reader = WeightReader(weights_path)
-    weight_reader.load_weights(yolov3)
-
     # preprocess the image
     image = cv2.imread(image_path)
     image_h, image_w, _ = image.shape
     print("image_h, w", image_h, image_w)
     new_image = preprocess_input(image, net_h, net_w)
-
-
+    
+    # Returns a compiled model identical to the previous one
     yolov3 = load_model('aerial_model.h5')
+    yolos = yolov3.predict(new_image)
+    
 
     boxes = []
 
@@ -479,4 +364,4 @@ def main(args):
 
 if __name__ == '__main__':
     args = argparser.parse_args()
-    main(args)
+    _main_(args)

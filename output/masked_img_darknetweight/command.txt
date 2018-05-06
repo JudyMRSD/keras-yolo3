@@ -1,7 +1,9 @@
+1)
 300_detect1.jpg
 
 python yolo3_aerial.py -w yolov3-aerial.weights -i ./training_data/aerial/images_may4/300.jpg
 
+2)
 300_detect2.jpg
 "saved_weights_name":   "/home/jin/workspace/Intersection_TrafficFlow/detection/keras-yolo3/aerial_model.h5",
 
@@ -9,5 +11,24 @@ yolo3_aerial.py
 yolov3.save('aerial_model.h5')
 python predict.py -c ./aerial_zoo/config_aerial.json -i ./training_data/aerial/images_may4/300.jpg
 
+3)
+300_detect3.jpg
 
+load darknet weights, then save to h5, and reload using load_model
 
+yolos = yolov3.predict(new_image)
+yolov3.save('aerial_model.h5')
+
+# Deletes the existing model
+del yolov3  
+
+# Returns a compiled model identical to the previous one
+yolov3 = load_model('aerial_model.h5')
+
+python yolo3_aerial.py -w yolov3-aerial.weights -i ./training_data/aerial/images_may4/300.jpg
+
+4)
+300_detect4.jpg 
+detect single image using trained model
+
+python detect_single_img.py -i ./training_data/aerial/images_may4/300.jpg
