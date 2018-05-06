@@ -446,7 +446,7 @@ def _main_(args):
     #           "chair", "sofa", "pottedplant", "bed", "diningtable", "toilet", "tvmonitor", "laptop", "mouse", \
     #           "remote", "keyboard", "cell phone", "microwave", "oven", "toaster", "sink", "refrigerator", \
     #           "book", "clock", "vase", "scissors", "teddy bear", "hair drier", "toothbrush"]
-    labels = ["car", "truck bus", "minibus", "cyclist" ]
+    labels = ["car", "truck", "bus", "minibus", "cyclist" ]
     # make the yolov3 model to predict 80 classes on COCO
     yolov3 = make_yolov3_model()
 
@@ -461,6 +461,7 @@ def _main_(args):
     new_image = preprocess_input(image, net_h, net_w)
     # run the prediction
     yolos = yolov3.predict(new_image)
+    yolov3.save('aerial_model.h5')
     boxes = []
 
     for i in range(len(yolos)):
