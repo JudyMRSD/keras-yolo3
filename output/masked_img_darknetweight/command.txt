@@ -32,3 +32,7 @@ python yolo3_aerial.py -w yolov3-aerial.weights -i ./training_data/aerial/images
 detect single image using trained model
 
 python detect_single_img.py -i ./training_data/aerial/images_may4/300.jpg
+
+5)
+kangaroo_00001.jpg
+python predict.py -c ./aerial_zoo/config_kangaroo2.json -i ./training_data/kangaroo/images/00001.jpg
