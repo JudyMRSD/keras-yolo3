@@ -1,0 +1,13 @@
+300_detect1.jpg
+
+python yolo3_aerial.py -w yolov3-aerial.weights -i ./training_data/aerial/images_may4/300.jpg
+
+300_detect2.jpg
+"saved_weights_name":   "/home/jin/workspace/Intersection_TrafficFlow/detection/keras-yolo3/aerial_model.h5",
+
+yolo3_aerial.py
+yolov3.save('aerial_model.h5')
+python predict.py -c ./aerial_zoo/config_aerial.json -i ./training_data/aerial/images_may4/300.jpg
+
+
+
