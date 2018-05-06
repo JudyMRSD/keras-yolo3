@@ -1,5 +1,5 @@
 # source activate carnd-track-yolo
-# python yolo3_aerial.py -w yolov3-aerial.weights -i car.jpg
+# python detect_single_img.py -i ./training_data/aerial/images_may4/300.jpg
 import argparse
 import os
 import numpy as np
@@ -151,12 +151,15 @@ def bbox_iou(box1, box2):
     intersect_h = _interval_overlap([box1.ymin, box1.ymax], [box2.ymin, box2.ymax])
     
     intersect = intersect_w * intersect_h
-
+    #print("box1.xmax", box1.xmax, "box1.xmin",box1.xmin)
+    #print("box2.xmax", box2.xmax, "box2.xmin", box2.xmin)
     w1, h1 = box1.xmax-box1.xmin, box1.ymax-box1.ymin
     w2, h2 = box2.xmax-box2.xmin, box2.ymax-box2.ymin
-    
+    #print("w1, h1, w2, h2",w1, h1, w2, h2)
     union = w1*h1 + w2*h2 - intersect
-    
+
+    if (union==0):
+        return -1
     return float(intersect) / union
 
 
@@ -270,6 +273,7 @@ def draw_boxes(image, boxes, labels, obj_thresh):
     for box in boxes:
         label_str = ''
         label = -1
+        print("len(labels)",len(labels) )
         for i in range(len(labels)):
             if box.classes[i] > obj_thresh:
                 label_str += labels[i]
@@ -305,8 +309,9 @@ def draw_boxes(image, boxes, labels, obj_thresh):
             # print("x1,y1,x2,y2",x1,y1,x2,y2)
             # cv2.rectangle(image, (x1,y1), (x2, y2), (0, 255, 0), 3)
 
-
-
+            print("box.xmin,box.ymin", box.xmin,box.ymin, "box.xmax,box.ymax", box.xmax,box.ymax)
+            if (box.xmin<0 or box.ymin<0 or box.xmax<0 or box.ymax<0):
+                continue
             cv2.rectangle(image, (box.xmin,box.ymin), (box.xmax,box.ymax), (0,255,0), 3)
             cv2.putText(image, 
                         label_str + ' ' + str(box.get_score()), 
@@ -328,7 +333,8 @@ def _main_(args):
     obj_thresh, nms_thresh = 0.5, 0.45
     anchors = [[116,90,  156,198,  373,326],  [30,61, 62,45,  59,119], [10,13,  16,30,  33,23]]
     
-    labels = ["car", "truck", "bus", "minibus", "cyclist" ]
+    # labels = ["car", "truck", "bus", "minibus", "cyclist" ]
+    labels = ["car","bus"]
     # preprocess the image
     image = cv2.imread(image_path)
     image_h, image_w, _ = image.shape
@@ -339,7 +345,7 @@ def _main_(args):
     yolov3 = load_model('aerial_model.h5')
     yolos = yolov3.predict(new_image)
     
-
+    print("yolos shape", len(yolos))
     boxes = []
 
     for i in range(len(yolos)):
@@ -347,6 +353,7 @@ def _main_(args):
         print("i",i)
         if (i==0):
             print ("yolos[i][0]", yolos[i][0])
+        print("yolos[i] shape", i, ": ", len(yolos[i]))
         print("yolos[i][0] shape", len(yolos[i][0]))# len(yolos[0][0]) = 13, len(yolos[1][0]) = 26, len(yolos[2][0]) = 52
         boxes += decode_netout(yolos[i][0], anchors[i], obj_thresh, nms_thresh, net_h, net_w)
 
@@ -356,10 +363,11 @@ def _main_(args):
     # suppress non-maximal boxes
     do_nms(boxes, nms_thresh)     
 
-    # draw bounding boxes on the image using labels
+    # draw bounding boxes on the image using labels,
     draw_boxes(image, boxes, labels, obj_thresh) 
  
     # write the image with bounding boxes to file
+    print("saved image at: ", image_path[:-4] + '_detected' + image_path[-4:])
     cv2.imwrite(image_path[:-4] + '_detected' + image_path[-4:], (image).astype('uint8')) 
 
 if __name__ == '__main__':

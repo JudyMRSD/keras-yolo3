@@ -133,13 +133,22 @@ def create_model(
             warmup_batches      = warmup_batches,
             ignore_thresh       = ignore_thresh,
             scales              = scales
-        )        
+        )
+
+    # aerial_model = load_model('aerial_model.h5')
+    # print("aerial_model summary", aerial_model.summary())
+    # backend_model= load_model('backend.h5')
+    # print("backend_model summary", backend_model.summary())
 
     # load the pretrained weight if exists, otherwise load the backend weight only
     if os.path.exists(saved_weights_name): 
-        print("\nLoading pretrained weights.\n")
-        template_model.load_weights(saved_weights_name)
+        # print("\nLoading pretrained weights.\n")
+        # print("saved_weights_name", saved_weights_name)
+        # template_model.load_weights(saved_weights_name)
+        template_model.load_weights("backend.h5", by_name=True)
+        print("summary",template_model.summary())
     else:
+
         template_model.load_weights("backend.h5", by_name=True)       
 
     if multi_gpu > 1:
@@ -215,6 +224,7 @@ def _main_(args):
     print("labels", labels)
     train_model, infer_model = create_model(
         nb_class            = len(labels),
+        # nb_class            = 2,
         anchors             = config['model']['anchors'], 
         max_box_per_image   = max_box_per_image, 
         max_grid            = [config['model']['max_input_size'], config['model']['max_input_size']], 
