@@ -1,5 +1,7 @@
 #! /usr/bin/env python
-
+# python predict.py -c config.json -i /path/to/image/or/video
+# python predict.py -c ./aerial_zoo/config_aerial.json -i ./training_data/aerial/images_may4/300.jpg
+# python predict.py -c ./aerial_zoo/config_aerial.json -i ./training_data/aerial/images_may4/
 import os
 import argparse
 import json
