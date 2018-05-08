@@ -1,13 +1,19 @@
 #! /usr/bin/env python
-
+# python train.py -c ./aerial_zoo/config_aerial_4_class.json
 import argparse
 import os
+
+import os
+os.environ['KERAS_BACKEND'] = 'tensorflow'
+
 import numpy as np
 import json
 from voc import parse_voc_annotation
+from yolo3Label import LabelParser
 from yolo import create_yolov3_model, dummy_loss
 from generator import BatchGenerator
 from utils.utils import normalize, evaluate, makedirs
+from utils.train_monit import TrainMonitorTools
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau, TensorBoard
 from keras.optimizers import Adam
 from callbacks import CustomModelCheckpoint
@@ -15,8 +21,13 @@ from utils.multi_gpu_model import multi_gpu_model
 import tensorflow as tf
 import keras
 import cv2
-
 from keras.models import load_model
+
+
+Annotation_Type = 'darknet_yolo3'
+Classes = ['car', 'truch', 'bus', 'minibus']
+Plot_Training_Instances = False
+
 def plot_training_instances(train_ints, train_labels ):
     print("train_ints[0]['object'] ", train_ints[0]['object']) # train_ints[0]['object']  [{'name': 'car', 'xmin': 3183, 'ymin': 1337, 'xmax': 3292, 'ymax': 1408}, {'name': 'car', 'xmin': 2487, 'ymin': 2079, 'xmax': 2536, 'ymax': 2183}, {'name': 'car', 'xmin': 2394, 'ymin': 2103, 'xmax': 2451, 'ymax': 2244}, {'name': 'car', 'xmin': 2477, 'ymin': 1919, 'xmax': 2534, 'ymax': 2040}, {'name': 'car', 'xmin': 2400, 'ymin': 1929, 'xmax': 2450, 'ymax': 2044}, {'name': 'car', 'xmin': 2161, 'ymin': 1482, 'xmax': 2272, 'ymax': 1531}, {'name': 'car', 'xmin': 2745, 'ymin': 1286, 'xmax': 2869, 'ymax': 1352}, {'name': 'car', 'xmin': 2543, 'ymin': 1158, 'xmax': 2642, 'ymax': 1245}, {'name': 'car', 'xmin': 2447, 'ymin': 836, 'xmax': 2499, 'ymax': 937}, {'name': 'car', 'xmin': 2278, 'ymin': 893, 'xmax': 2331, 'ymax': 1008}, {'name': 'car', 'xmin': 2216, 'ymin': 749, 'xmax': 2263, 'ymax': 865}, {'name': 'car', 'xmin': 2281, 'ymin': 552, 'xmax': 2325, 'ymax': 658}]
     print("train_ints[0]['filename'] ", train_ints[0]['filename']) # train_ints[0]['filename']  ./training_data/aerial/images_may4/2300.jpg
@@ -25,7 +36,7 @@ def plot_training_instances(train_ints, train_labels ):
     num_imgs = len(train_ints)
     for i in range(0, num_imgs):
         image_path = train_ints[i]['filename']
-        print("img_path")
+        print("img_path", image_path)
         image = cv2.imread(image_path)
         for box in train_ints[i]['object']:
             name = box['name']
@@ -58,12 +69,19 @@ def create_training_instances(
 ):
     # print("args: ", train_annot_folder, train_image_folder, train_cache, valid_annot_folder, valid_image_folder,valid_cache,labels)
     # parse annotations of the training set
-    train_ints, train_labels = parse_voc_annotation(train_annot_folder, train_image_folder, train_cache, labels)
+    if Annotation_Type == 'voc':
+        train_ints, train_labels = parse_voc_annotation(train_annot_folder, train_image_folder, train_cache, labels)
+    elif Annotation_Type == 'darknet_yolo3':
+        parser = LabelParser()
+        train_ints, train_labels = parser.parse_yolo_annotation(Classes, train_annot_folder, train_image_folder, train_cache, labels)
+
     # train_ints[0].object   =  [{'name':'car','xmin':3183,'ymin':1337,'xmax':3292,'ymax':1408}, ...]
     # train_ints[0].filename =  './training_data/aerial/imgs_may4/2300.jpg'
     #print("train_ints, train_labels", train_ints, train_labels)
     # parse annotations of the validation set, if any, otherwise split the training set
-    plot_training_instances(train_ints, train_labels)
+    
+    if Plot_Training_Instances==True:
+        plot_training_instances(train_ints, train_labels)
 
     if os.path.exists(valid_annot_folder):
         valid_ints, valid_labels = parse_voc_annotation(valid_annot_folder, valid_image_folder, valid_cache, labels)
@@ -78,7 +96,7 @@ def create_training_instances(
         valid_ints = train_ints[train_valid_split:]
         train_ints = train_ints[:train_valid_split]
 
-        print("valid_ints:", valid_ints)
+        #print("valid_ints:", valid_ints)
 
     # compare the seen labels with the given labels in config.json
     if len(labels) > 0:
@@ -172,6 +190,9 @@ def create_model(
             scales              = scales
         )
 
+        
+
+
     # aerial_model = load_model('aerial_model.h5')
     # print("aerial_model summary", aerial_model.summary())
     # backend_model= load_model('backend.h5')
@@ -200,7 +221,7 @@ def create_model(
 
 def _main_(args):
     config_path = args.conf
-
+    print("config_path", config_path)
     with open(config_path) as config_buffer:    
         config = json.loads(config_buffer.read())
 
@@ -219,7 +240,7 @@ def _main_(args):
     print('\nTraining on the following labels: ' + str(labels))
 
     ###############################
-    #   Create the generators 
+    #   Create the generators
     ###############################    
     train_generator = BatchGenerator(
         instances           = train_ints, 
@@ -279,7 +300,7 @@ def _main_(args):
     ###############################
     callbacks = create_callbacks(config['train']['saved_weights_name'], config['train']['tensorboard_dir'], infer_model)
 
-    train_model.fit_generator(
+    history = train_model.fit_generator(
         generator        = train_generator, 
         steps_per_epoch  = len(train_generator) * config['train']['train_times'], 
         epochs           = config['train']['nb_epochs'] + config['train']['warmup_epochs'], 
@@ -288,6 +309,11 @@ def _main_(args):
         workers          = 4,
         max_queue_size   = 8
     )
+
+    trainMonitTool = TrainMonitorTools()
+    trainMonitTool.visualizeTrain(history)
+
+
 
     # make a GPU version of infer_model for evaluation
     if multi_gpu > 1:

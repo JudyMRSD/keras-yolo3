@@ -29,10 +29,13 @@ class LabelParser:
                 print("ann_base", ann_base) # DJI_0005-0018.txt
                 image_path_jpg = img_dir + ann_base.replace('.txt','.jpg')
                 image_path_JPG = img_dir + ann_base.replace('.txt','.JPG')
+                image_path_png = img_dir + ann_base.replace('.txt','.png')
                 if os.path.exists(image_path_jpg):
                     image_path = image_path_jpg
                 elif os.path.exists(image_path_JPG):
                     image_path = image_path_JPG
+                elif os.path.exists(image_path_png):
+                    image_path = image_path_png
                 else:
                     continue
                 image = cv2.imread(image_path)
@@ -65,11 +68,11 @@ class LabelParser:
                 # img = {'object':[], 'filename':'./training_data/aerial/images_may4/2300.jpg', 'width':4156, 'height':2793}
 
                 #'object': [{'name':'car', 'xmin':3183, 'ymin':1337, 'xmax':3292}]
-        print(" finish ")
-        cache = {'all_insts': all_insts, 'seen_labels': seen_labels}
-        with open(cache_name, 'wb') as handle:
-            pickle.dump(cache, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
+            print(" finish ")
+            cache = {'all_insts': all_insts, 'seen_labels': seen_labels}
+            with open(cache_name, 'wb') as handle:
+                pickle.dump(cache, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        return all_insts, seen_labels
 
 
 
@@ -85,7 +88,7 @@ class LabelParser:
         return label_object
 
 def main():
-    classes = ['car', 'truch', 'bus', 'minibus', 'cyclist']
+    classes = ['car', 'truch', 'bus', 'minibus']
     ann_dir = './training_data/yolo3_darknet_aerial/'
     img_dir = './training_data/yolo3_darknet_aerial/'
     cache_name = './training_data/yolo3_darknet_aerial.pkl'

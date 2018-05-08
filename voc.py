@@ -13,6 +13,7 @@ def parse_voc_annotation(ann_dir, img_dir, cache_name, labels=[]):
     #     all_insts, seen_labels = cache['all_insts'], cache['seen_labels']
     #else:
     if os.path.exists(cache_name):
+        print("cache name: ",cache_name)
         all_insts = []
         seen_labels = {}
         
