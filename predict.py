@@ -122,19 +122,20 @@ def _main_(args):
 
         # the main loop
         for image_path in image_paths:
-            base = os.path.basename(image_path)
-            base = os.path.splitext(base)[0]
+
 
             image = cv2.imread(image_path)
+
             print(image_path)
 
             # predict the bounding boxes
             boxes = get_yolo_boxes(infer_model, [image], net_h, net_w, config['model']['anchors'], obj_thresh, nms_thresh)[0]
 
             # draw bounding boxes on the image using labels
-            draw_boxes(out_dir, base, image, boxes, config['model']['labels'], obj_thresh)
+            draw_boxes(out_dir, image_path, image, boxes, config['model']['labels'], obj_thresh)
      
             # write the image with bounding boxes to file
+
             cv2.imwrite(output_path + image_path.split('/')[-1], np.uint8(image))   
             print("image saved:", str(output_path + image_path.split('/')[-1]) )      
 
