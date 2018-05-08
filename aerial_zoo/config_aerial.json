@@ -1,0 +1,35 @@
+{
+    "model" : {
+        "min_input_size":       288,
+        "max_input_size":       448,
+        "anchors":              [55,69, 75,234, 133,240, 136,129, 142,363, 203,290, 228,184, 285,359, 341,260],
+        "labels":               ["car", "bus"]
+    },
+
+    "train": {
+        "train_image_folder":   "./training_data/aerial/images_may4/",
+        "train_annot_folder":   "./training_data/aerial/annotations_may4/",
+        "cache_name":           "./aerial_zoo/aerial_train.pkl",
+
+        "train_times":          8,
+        "batch_size":           1,
+        "learning_rate":        1e-4,
+        "nb_epochs":            100,
+        "warmup_epochs":        3,
+        "ignore_thresh":        0.5,
+        "gpus":                 "0",
+        "scales":               [1,2,4],
+
+        "tensorboard_dir":      "logs",
+        "saved_weights_name":   "./aerial_model.h5",
+        "debug":                true
+    },
+
+    "valid": {
+        "valid_image_folder":   "",
+        "valid_annot_folder":   "",
+        "cache_name":           "",
+
+        "valid_times":          1
+    }
+}
