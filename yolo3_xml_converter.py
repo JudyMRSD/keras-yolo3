@@ -3,10 +3,33 @@
 # create an XML document
 import xml.etree.ElementTree as xml
 import cv2
+
+
+filepath = './output/DJI_0005-0019.txt'
+
+fp = open(filepath)
+# skip the first line (header)  image width height
+line = fp.readline()
+# with open(filepath) as fp:
+line = fp.readline()
+line = line.split(' ')
+print('image=', line[0], 'height=',line[1],'width =', line[2])
+img_filename, img_w, img_h = line[0], line[1], line[2]
+
+
+cnt = 1
+while line:
+   line = fp.readline()
+   line = line.split(' ')
+   if len(line)<=1:
+       print('finish file reading, invalid line')
+       break
+   print('class', line[0], 'xmin', line[1], 'ymin', line[2], 'xmax', line[3], 'ymax', line[4])
+   cnt += 1
+
+
+
 folde_name = "frames_yolo_out"
-img_filename ="300.jpg"
-img = cv2.imread(img_filename)
-img.shape()
 
 filename = "./output/test_xml.xml"
 root = xml.Element("annotation")
