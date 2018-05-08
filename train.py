@@ -25,7 +25,7 @@ from keras.models import load_model
 
 
 Annotation_Type = 'darknet_yolo3'
-Classes = ['car', 'truch', 'bus', 'minibus']
+Classes = ['car']
 Plot_Training_Instances = False
 
 def plot_training_instances(train_ints, train_labels ):
@@ -69,12 +69,18 @@ def create_training_instances(
 ):
     # print("args: ", train_annot_folder, train_image_folder, train_cache, valid_annot_folder, valid_image_folder,valid_cache,labels)
     # parse annotations of the training set
-    if Annotation_Type == 'voc':
-        train_ints, train_labels = parse_voc_annotation(train_annot_folder, train_image_folder, train_cache, labels)
-    elif Annotation_Type == 'darknet_yolo3':
-        parser = LabelParser()
-        train_ints, train_labels = parser.parse_yolo_annotation(Classes, train_annot_folder, train_image_folder, train_cache, labels)
 
+    train_ints_voc, train_labels_voc = parse_voc_annotation(train_annot_folder, train_image_folder, train_cache, labels)
+    print("voc finish")
+    parser = LabelParser()
+    train_ints_yolo, train_labels_yolo = parser.parse_yolo_annotation(Classes, train_annot_folder, train_image_folder, train_cache, labels)
+    train_ints = train_ints_voc + train_ints_yolo
+
+    print("train_ints train.py", train_ints)
+
+    train_labels = {}
+    train_labels.update(train_labels_voc)
+    train_labels.update(train_labels_yolo)
     # train_ints[0].object   =  [{'name':'car','xmin':3183,'ymin':1337,'xmax':3292,'ymax':1408}, ...]
     # train_ints[0].filename =  './training_data/aerial/imgs_may4/2300.jpg'
     #print("train_ints, train_labels", train_ints, train_labels)
@@ -190,7 +196,13 @@ def create_model(
             scales              = scales
         )
 
-        
+        # Setting the session to allow growth, so it doesn't allocate all GPU memory.
+        gpu_ops = tf.GPUOptions(allow_growth=True)
+        config = tf.ConfigProto(gpu_options=gpu_ops)
+        sess = tf.Session(config=config)
+
+        # Setting this as the default tensorflow session.
+        keras.backend.tensorflow_backend.set_session(sess)
 
 
     # aerial_model = load_model('aerial_model.h5')
@@ -215,7 +227,7 @@ def create_model(
         train_model = template_model      
 
     optimizer = Adam(lr=lr, clipnorm=0.001)
-    train_model.compile(loss=dummy_loss, optimizer=optimizer)             
+    train_model.compile(loss=dummy_loss, optimizer=optimizer, metrics=['accuracy'])
 
     return train_model, infer_model
 
@@ -310,10 +322,6 @@ def _main_(args):
         max_queue_size   = 8
     )
 
-    trainMonitTool = TrainMonitorTools()
-    trainMonitTool.visualizeTrain(history)
-
-
 
     # make a GPU version of infer_model for evaluation
     if multi_gpu > 1:
@@ -328,7 +336,12 @@ def _main_(args):
     # print the score
     for label, average_precision in average_precisions.items():
         print(labels[label] + ': {:.4f}'.format(average_precision))
-    print('mAP: {:.4f}'.format(sum(average_precisions.values()) / len(average_precisions)))           
+    print('mAP: {:.4f}'.format(sum(average_precisions.values()) / len(average_precisions)))
+
+    trainMonitTool = TrainMonitorTools()
+    trainMonitTool.visualizeTrain(history)
+
+
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser(description='train and evaluate YOLO_v3 model on any dataset')

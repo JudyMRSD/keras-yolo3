@@ -3,6 +3,11 @@
 # python predict.py -c ./aerial_zoo/config_aerial.json -i ./training_data/aerial/images_may4/300.jpg
 # python predict.py -c ./aerial_zoo/config_aerial.json -i ./training_data/aerial/images_may4/
 
+
+# python predict.py -c ./aerial_zoo/config_aerial_4_class.json -i ./training_data/yolo3_darknet_aerial/DJI_0005-0019.jpg
+# python predict.py -c ./aerial_zoo/config_aerial_4_class.json -i ./training_data/aerial_fifth/images_may4/300.jpg
+
+
 import os
 import argparse
 import json
@@ -17,8 +22,12 @@ def _main_(args):
     config_path  = args.conf
     input_path   = args.input
     output_path  = args.output
+    out_dir = "./output/"
 
-    with open(config_path) as config_buffer:    
+
+    print("config_path", config_path)
+    with open(config_path) as config_buffer:
+
         config = json.load(config_buffer)
 
     makedirs(output_path)
@@ -109,10 +118,13 @@ def _main_(args):
         else:
             image_paths += [input_path]
 
-        image_paths = [inp_file for inp_file in image_paths if (inp_file[-4:] == '.jpg' or inp_file == '.png')]
+        image_paths = [inp_file for inp_file in image_paths if (inp_file[-4:] == '.jpg' or inp_file[-4:] == '.png')]
 
         # the main loop
         for image_path in image_paths:
+            base = os.path.basename(image_path)
+            base = os.path.splitext(base)[0]
+
             image = cv2.imread(image_path)
             print(image_path)
 
@@ -120,7 +132,7 @@ def _main_(args):
             boxes = get_yolo_boxes(infer_model, [image], net_h, net_w, config['model']['anchors'], obj_thresh, nms_thresh)[0]
 
             # draw bounding boxes on the image using labels
-            draw_boxes(image, boxes, config['model']['labels'], obj_thresh) 
+            draw_boxes(out_dir, base, image, boxes, config['model']['labels'], obj_thresh)
      
             # write the image with bounding boxes to file
             cv2.imwrite(output_path + image_path.split('/')[-1], np.uint8(image))   

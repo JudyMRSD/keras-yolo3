@@ -88,7 +88,8 @@ class LabelParser:
         return label_object
 
 def main():
-    classes = ['car', 'truch', 'bus', 'minibus']
+    # classes = ['car', 'truch', 'bus', 'minibus']
+    classes = ['car', 'car', 'car', 'car']
     ann_dir = './training_data/yolo3_darknet_aerial/'
     img_dir = './training_data/yolo3_darknet_aerial/'
     cache_name = './training_data/yolo3_darknet_aerial.pkl'
