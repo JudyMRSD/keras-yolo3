@@ -78,6 +78,8 @@ def create_training_instances(
         valid_ints = train_ints[train_valid_split:]
         train_ints = train_ints[:train_valid_split]
 
+        print("valid_ints:", valid_ints)
+
     # compare the seen labels with the given labels in config.json
     if len(labels) > 0:
         overlap_labels = set(labels).intersection(set(train_labels.keys()))
