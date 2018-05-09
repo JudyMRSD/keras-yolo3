@@ -7,8 +7,12 @@
 # python predict.py -c ./aerial_zoo/config_aerial_4_class.json -i ./training_data/yolo3_darknet_aerial/DJI_0005-0019.jpg
 # python predict.py -c ./aerial_zoo/config_aerial_4_class.json -i ./training_data/aerial_fifth/images_may4/300.jpg
 
+# python predict.py -c ./aerial_zoo/config_aerial_4_class.json -i ./training_data/aerial_fifth/images_may4/
+
 
 import os
+os.environ['KERAS_BACKEND'] = 'tensorflow'
+
 import argparse
 import json
 import cv2
@@ -22,7 +26,7 @@ def _main_(args):
     config_path  = args.conf
     input_path   = args.input
     output_path  = args.output
-    out_dir = "./output/"
+    out_dir = "./output_txt/"
 
 
     print("config_path", config_path)
