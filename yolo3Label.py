@@ -11,7 +11,7 @@ class LabelParser:
         self.a = 1
     def parse_yolo_annotation(self,classes, ann_dir, img_dir, cache_name, labels=[]):
         self.classes = classes
-
+        print("parse_yolo_annotation, self.classes", self.classes)
         # if os.path.exists(cache_name):
         #     print("exists", cache_name)
         #     with open(cache_name, 'rb') as handle:
@@ -22,8 +22,9 @@ class LabelParser:
             all_insts = []
             seen_labels = {}
             ann_list = sorted(glob.glob(ann_dir+'*.txt'))
+            print("ann_list", ann_list)
             for ann in ann_list:
-                #print("ann", ann)
+                print("ann", ann)
                 img = {'object': []}
 
                 ann_base = os.path.basename(ann)
@@ -52,10 +53,11 @@ class LabelParser:
                 bbox_labels = np.loadtxt(ann, delimiter=' ',
                                               dtype = {'names': ('class_id', 'center_x', 'center_y','bbox_width','bbox_height'),
                                                        'formats': ('i4', 'f4', 'f4','f4','f4')})
+                print("bbox_labels", bbox_labels)
 
                 for label in bbox_labels:
 
-
+                    print("label", label)
                     label_object = self.yolo_to_vertex(label)
                     if label_object['name'] in seen_labels:
                         seen_labels[label_object['name']] += 1

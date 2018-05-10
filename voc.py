@@ -3,7 +3,9 @@ import os
 import xml.etree.ElementTree as ET
 import pickle
 
-
+Load_Cache = False
+OneClass = True
+SingleClassName = "car"
 
 def parse_voc_annotation(ann_dir, img_dir, cache_name, labels=[]):
     # if os.path.exists(cache_name):
@@ -12,7 +14,16 @@ def parse_voc_annotation(ann_dir, img_dir, cache_name, labels=[]):
     #         cache = pickle.load(handle)
     #     all_insts, seen_labels = cache['all_insts'], cache['seen_labels']
     #else:
-    if os.path.exists(cache_name):
+    if Load_Cache == True:
+        if os.path.exists(cache_name):
+            print("exists", cache_name)
+            with open(cache_name, 'rb') as handle:
+                cache = pickle.load(handle)
+            all_insts, seen_labels = cache['all_insts'], cache['seen_labels']
+        else:
+            print("error, cache notfound")
+
+    if Load_Cache == False:
         print("cache name: ",cache_name)
         all_insts = []
         seen_labels = {}
@@ -40,7 +51,12 @@ def parse_voc_annotation(ann_dir, img_dir, cache_name, labels=[]):
                     
                     for attr in list(elem):
                         if 'name' in attr.tag:
-                            obj['name'] = attr.text
+                            if OneClass:
+                                obj['name'] = SingleClassName
+                            else:
+                                obj['name'] = attr.text
+
+                            
 
                             if obj['name'] in seen_labels:
                                 seen_labels[obj['name']] += 1
