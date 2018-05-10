@@ -4,7 +4,7 @@ import pickle
 import cv2
 import numpy as np
 
-
+One_Class = True
 
 class LabelParser:
     def __init__(self):
@@ -12,21 +12,22 @@ class LabelParser:
     def parse_yolo_annotation(self,classes, ann_dir, img_dir, cache_name, labels=[]):
         self.classes = classes
 
-        if os.path.exists(cache_name):
-            print("exists", cache_name)
-            with open(cache_name, 'rb') as handle:
-                cache = pickle.load(handle)
-            all_insts, seen_labels = cache['all_insts'], cache['seen_labels']
-        else:
+        # if os.path.exists(cache_name):
+        #     print("exists", cache_name)
+        #     with open(cache_name, 'rb') as handle:
+        #         cache = pickle.load(handle)
+        #     all_insts, seen_labels = cache['all_insts'], cache['seen_labels']
+        # else:
+        if True:
             all_insts = []
             seen_labels = {}
             ann_list = sorted(glob.glob(ann_dir+'*.txt'))
             for ann in ann_list:
-                print("ann", ann)
+                #print("ann", ann)
                 img = {'object': []}
 
                 ann_base = os.path.basename(ann)
-                print("ann_base", ann_base) # DJI_0005-0018.txt
+                #print("ann_base", ann_base) # DJI_0005-0018.txt
                 image_path_jpg = img_dir + ann_base.replace('.txt','.jpg')
                 image_path_JPG = img_dir + ann_base.replace('.txt','.JPG')
                 image_path_png = img_dir + ann_base.replace('.txt','.png')
@@ -53,6 +54,8 @@ class LabelParser:
                                                        'formats': ('i4', 'f4', 'f4','f4','f4')})
 
                 for label in bbox_labels:
+
+
                     label_object = self.yolo_to_vertex(label)
                     if label_object['name'] in seen_labels:
                         seen_labels[label_object['name']] += 1
@@ -78,18 +81,20 @@ class LabelParser:
 
     def yolo_to_vertex(self, label):
         label_object = {}
-        label_object['name'] = self.classes[label[0]]
+        if One_Class == True:
+            label_object['name'] = self.classes[0]
+        # label_object['name'] = self.classes[label[0]]
         # 'class_id', 'center_x', 'center_y','bbox_width','bbox_height'
         label_object['xmin'] = int((label[1] - label[3] / 2) * self.img_width)
         label_object['ymin'] = int((label[2] - label[4] / 2) * self.img_height)
         label_object['xmax'] = int((label[1] + label[3] / 2) * self.img_width)
         label_object['ymax'] = int((label[2] + label[4] / 2) * self.img_height)
-        print("label_object", label_object)
+        # print("label_object", label_object)
         return label_object
 
 def main():
     # classes = ['car', 'truch', 'bus', 'minibus']
-    classes = ['car', 'car', 'car', 'car']
+    classes = ['car']
     ann_dir = './training_data/yolo3_darknet_aerial/'
     img_dir = './training_data/yolo3_darknet_aerial/'
     cache_name = './training_data/yolo3_darknet_aerial.pkl'

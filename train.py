@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 # python train.py -c ./aerial_zoo/config_aerial_4_class.json
+# python train.py -c ./aerial_zoo/config_aerial_1_class.json
 import argparse
 import os
 
@@ -27,6 +28,7 @@ from keras.models import load_model
 Annotation_Type = 'darknet_yolo3'
 Classes = ['car']
 Plot_Training_Instances = False
+EarlyStoppingLoss =  False    #0.01
 
 def plot_training_instances(train_ints, train_labels ):
     print("train_ints[0]['object'] ", train_ints[0]['object']) # train_ints[0]['object']  [{'name': 'car', 'xmin': 3183, 'ymin': 1337, 'xmax': 3292, 'ymax': 1408}, {'name': 'car', 'xmin': 2487, 'ymin': 2079, 'xmax': 2536, 'ymax': 2183}, {'name': 'car', 'xmin': 2394, 'ymin': 2103, 'xmax': 2451, 'ymax': 2244}, {'name': 'car', 'xmin': 2477, 'ymin': 1919, 'xmax': 2534, 'ymax': 2040}, {'name': 'car', 'xmin': 2400, 'ymin': 1929, 'xmax': 2450, 'ymax': 2044}, {'name': 'car', 'xmin': 2161, 'ymin': 1482, 'xmax': 2272, 'ymax': 1531}, {'name': 'car', 'xmin': 2745, 'ymin': 1286, 'xmax': 2869, 'ymax': 1352}, {'name': 'car', 'xmin': 2543, 'ymin': 1158, 'xmax': 2642, 'ymax': 1245}, {'name': 'car', 'xmin': 2447, 'ymin': 836, 'xmax': 2499, 'ymax': 937}, {'name': 'car', 'xmin': 2278, 'ymin': 893, 'xmax': 2331, 'ymax': 1008}, {'name': 'car', 'xmin': 2216, 'ymin': 749, 'xmax': 2263, 'ymax': 865}, {'name': 'car', 'xmin': 2281, 'ymin': 552, 'xmax': 2325, 'ymax': 658}]
@@ -43,7 +45,6 @@ def plot_training_instances(train_ints, train_labels ):
             xmin = box['xmin']
             ymin = box['ymin']
             xmax = box['xmax']
-            ymax = box['ymax']
             cv2.rectangle(image, (xmin, ymin), (xmax, ymax), (0, 255, 0), 3)
             cv2.putText(image,
                         name,
@@ -70,17 +71,17 @@ def create_training_instances(
     # print("args: ", train_annot_folder, train_image_folder, train_cache, valid_annot_folder, valid_image_folder,valid_cache,labels)
     # parse annotations of the training set
 
-    train_ints_voc, train_labels_voc = parse_voc_annotation(train_annot_folder, train_image_folder, train_cache, labels)
-    print("voc finish")
+    #train_ints_voc, train_labels_voc = parse_voc_annotation(train_annot_folder, train_image_folder, train_cache, labels)
+    #print("voc finish")
     parser = LabelParser()
-    train_ints_yolo, train_labels_yolo = parser.parse_yolo_annotation(Classes, train_annot_folder, train_image_folder, train_cache, labels)
-    train_ints = train_ints_voc + train_ints_yolo
+    train_ints, train_labels = parser.parse_yolo_annotation(Classes, train_annot_folder, train_image_folder, train_cache, labels)
+    #train_ints = train_ints_voc + train_ints_yolo
 
     print("train_ints train.py", train_ints)
 
-    train_labels = {}
-    train_labels.update(train_labels_voc)
-    train_labels.update(train_labels_yolo)
+    # train_labels = {}
+    # train_labels.update(train_labels_voc)
+    # train_labels.update(train_labels_yolo)
     # train_ints[0].object   =  [{'name':'car','xmin':3183,'ymin':1337,'xmax':3292,'ymax':1408}, ...]
     # train_ints[0].filename =  './training_data/aerial/imgs_may4/2300.jpg'
     #print("train_ints, train_labels", train_ints, train_labels)
@@ -157,8 +158,11 @@ def create_callbacks(saved_weights_name, tensorboard_logs, model_to_save):
         log_dir                = tensorboard_logs,
         write_graph            = True,
         write_images           = True,
-    )    
-    return [early_stop, checkpoint, reduce_on_plateau, tensorboard]
+    )
+    if EarlyStoppingLoss == True:
+        return [early_stop, checkpoint, reduce_on_plateau, tensorboard]
+    else:
+        return [checkpoint, reduce_on_plateau, tensorboard]
 
 def create_model(
     nb_class, 
@@ -196,13 +200,13 @@ def create_model(
             scales              = scales
         )
 
-        # Setting the session to allow growth, so it doesn't allocate all GPU memory.
-        gpu_ops = tf.GPUOptions(allow_growth=True)
-        config = tf.ConfigProto(gpu_options=gpu_ops)
-        sess = tf.Session(config=config)
-
-        # Setting this as the default tensorflow session.
-        keras.backend.tensorflow_backend.set_session(sess)
+        # # Setting the session to allow growth, so it doesn't allocate all GPU memory.
+        # gpu_ops = tf.GPUOptions(allow_growth=True)
+        # config = tf.ConfigProto(gpu_options=gpu_ops)
+        # sess = tf.Session(config=config)
+        #
+        # # Setting this as the default tensorflow session.
+        # keras.backend.tensorflow_backend.set_session(sess)
 
 
     # aerial_model = load_model('aerial_model.h5')

@@ -23,7 +23,7 @@ class Txt_To_Xml:
         line = f_txt.readline()
         line = line.split(' ')
         print('image=', line[0], 'height=',line[1],'width =', line[2], 'channels=', line[3])
-        self.img_filename, self.img_w, self.img_h,  self.img_channels = line[0], line[1], line[2], line[3]
+        self.img_filename, self.img_h, self.img_w,  self.img_channels = line[0], line[1], line[2], line[3]
 
         self.img_info()
 

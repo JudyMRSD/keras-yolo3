@@ -174,16 +174,16 @@ class YoloLayer(Layer):
                       lambda: loss + 10,
                       lambda: loss)
         
-        loss = tf.Print(loss, [grid_h, avg_obj], message='avg_obj \t\t', summarize=1000)
-        loss = tf.Print(loss, [grid_h, avg_noobj], message='avg_noobj \t\t', summarize=1000)
-        loss = tf.Print(loss, [grid_h, avg_iou], message='avg_iou \t\t', summarize=1000)
-        loss = tf.Print(loss, [grid_h, avg_cat], message='avg_cat \t\t', summarize=1000)
-        loss = tf.Print(loss, [grid_h, recall50], message='recall50 \t', summarize=1000)
-        loss = tf.Print(loss, [grid_h, recall75], message='recall75 \t', summarize=1000)   
-        loss = tf.Print(loss, [grid_h, recall50_c], message='recall50_cat \t', summarize=1000)
-        loss = tf.Print(loss, [grid_h, recall75_c], message='recall75_Cat \t', summarize=1000)          
-        loss = tf.Print(loss, [grid_h, count], message='count \t', summarize=1000)     
-        loss = tf.Print(loss, [grid_h, tf.reduce_sum(loss)],  message='loss: \t',   summarize=1000)   
+        # loss = tf.Print(loss, [grid_h, avg_obj], message='avg_obj \t\t', summarize=1000)
+        # loss = tf.Print(loss, [grid_h, avg_noobj], message='avg_noobj \t\t', summarize=1000)
+        # loss = tf.Print(loss, [grid_h, avg_iou], message='avg_iou \t\t', summarize=1000)
+        # loss = tf.Print(loss, [grid_h, avg_cat], message='avg_cat \t\t', summarize=1000)
+        # loss = tf.Print(loss, [grid_h, recall50], message='recall50 \t', summarize=1000)
+        # loss = tf.Print(loss, [grid_h, recall75], message='recall75 \t', summarize=1000)   
+        # loss = tf.Print(loss, [grid_h, recall50_c], message='recall50_cat \t', summarize=1000)
+        # loss = tf.Print(loss, [grid_h, recall75_c], message='recall75_Cat \t', summarize=1000)          
+        # loss = tf.Print(loss, [grid_h, count], message='count \t', summarize=1000)     
+        # loss = tf.Print(loss, [grid_h, tf.reduce_sum(loss)],  message='loss: \t',   summarize=1000)   
 
         return loss*self.scale
 
